@@ -1,0 +1,82 @@
+<tool id="tepid-discover" name="tepid-discover" version="@WRAPPER_VERSION@">
+    <description>discover TE variants</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements"/>
+    <version_command>tepid-discover --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+    @LINK_CONC@
+    tepid-discover
+    $deletions
+    $insertions
+    $strict
+    #if $mask:
+        --mask '$mask'
+    #end if
+    #if $discordant_bam:
+        --discordant '$discordant_bam'
+    #end if
+    @PROC@
+    @NAME@
+    -c conc.bam
+    -s '$split_bam'
+    -t '$te_annotation_bed'
+    $se_mode &&  ## The follwing is terrible, but from_work_dir cannot deal with variables
+    mv insertions_'$bowtie2_bam.element_identifier'.bed '$insertions_out' &&
+    mv deletions_'$bowtie2_bam.element_identifier'.bed '$deletions_out' &&
+    mv insertion_reads_'$bowtie2_bam.element_identifier'.txt '$insertion_reads_out' &&
+    mv deletion_reads_'$bowtie2_bam.element_identifier'.txt '$deletion_reads_out' &&
+    cat tepid_discover_log_'$bowtie2_bam.element_identifier'.txt
+    ]]></command>
+    <inputs>
+        <param name="bowtie2_bam" argument="--conc" type="data" format="bam"/>
+        <param name="discordant_bam" argument="--discordant" optional="true" type="data" format="bam"/>
+        <param name="split_bam" argument="--split" type="data" format="bam"/>
+        <param name="te_annotation_bed" argument="--te" type="data" format="bed"/>
+        <param name="se_mode" argument="--se" type="boolean" truevalue="--se" falsevalue="" help="Run in single-end mode"/>
+        <param name="mask" argument="--mask" type="data" optional="true" format="tab" help="Mask chromosomes present in this file"/>
+        <param name="deletions" argument="--deletions" type="boolean" truevalue="--deletions" falsevalue="" help="find deletions only"/>
+        <param name="insertions" argument="--insertions" type="boolean" truevalue="--insertions" falsevalue="" help="find insertions only"/>
+        <param name="strict" argument="--strict" type="boolean" truevalue="--strict" falsevalue="" help="Report high-confidence variants only"/>
+    </inputs>
+    <outputs>
+        <data name="insertions_out" format="bed"/>
+        <data name="deletions_out" format="bed"/>
+        <data name="insertion_reads_out" format="txt"/>
+        <data name="deletion_reads_out" format="txt"/>
+    </outputs>
+    <tests>
+        <test>
+            <param name="bowtie2_bam" value="conc.bam"/>
+            <param name="split_bam" value="split.bam"/>
+            <param name="te_annotation_bed" value="TAIR9_TE.bed.gz" ftype="bed"/>
+            <output name="insertions_out" file="insertions_test.bed"/>
+            <output name="deletions_out" file="deletions_test.bed"/>
+            <output name="insertion_reads_out" file="insertion_reads_test.txt"/>
+            <output name="deletion_reads_out" file="deletion_reads_test.txt"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+TEPID -- transposable element polymorphism identification
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  -k, --keep            keep all intermediate files
+  -d, --deletions       find deletions only
+  -i, --insertions      find insertions only
+  --strict              Report high-confidence variants only
+  --mask MASK           Mask chromosomes in comma separated list or file
+  -D DISCORDANT, --discordant DISCORDANT
+                        Supply discordant reads bam file
+  -p PROC, --proc PROC  number of processors
+  -n NAME, --name NAME  sample name
+  -c CONC, --conc CONC  bam file from bowtie2
+  -s SPLIT, --split SPLIT
+                        split reads bam file from yaha
+  -t TE, --te TE        TE annotation bedfile
+  --se                  Run in single-end mode
+    ]]></help>
+<expand macro="citations"/>
+</tool>

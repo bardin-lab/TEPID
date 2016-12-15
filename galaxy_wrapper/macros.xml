@@ -1,0 +1,29 @@
+<macros>
+    <xml name="requirements">
+        <requirements>
+            <requirement type="package" version="0.7.0">tepid</requirement>
+            <yield/>
+        </requirements>
+    </xml>
+    <token name="@WRAPPER_VERSION@">0.7.0</token>
+    <token name="@REFERENCES@">
+<![CDATA[
+------
+This tool is part of the `TEPID`_ pipeline from the `Lister laboratory`_.
+.. _TEPID package: https://github.com/ListerLab/TEPID
+.. _Lister laboratory http://listerlab.org/
+]]>
+    </token>
+    <token name="@PROC@">-p \$GALAXY_SLOTS</token>
+    <token name="@NAME@">-n '$bowtie2_bam.element_identifier'</token>
+    <token name="@LINK_CONC@"><![CDATA[
+        ln -f -s '$bowtie2_bam' conc.bam &&
+        ln -f -s '$bowtie2_bam.metadata.bam_index' conc.bam.bai &&
+    ]]></token>
+    <xml name="citations">
+        <citations>
+            <citation type="doi">10.7554/eLife.20777</citation>
+            <yield />
+        </citations>
+    </xml>
+</macros>
