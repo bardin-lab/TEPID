@@ -1,6 +1,6 @@
 # .shed.yml supporting automatic pushes.
 owner: mvdbeek
-name: tepid-discover
+name: tepid_discover
 description: discovers TE variants from short-read sequencing
 long_description: |
     TEPID uses illumina sequencing reads to identify novel TE variants. First,

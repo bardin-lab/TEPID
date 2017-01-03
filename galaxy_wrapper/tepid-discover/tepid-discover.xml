@@ -1,4 +1,4 @@
-<tool id="tepid-discover" name="tepid-discover" version="@WRAPPER_VERSION@">
+<tool id="tepid_discover" name="tepid-discover" version="@WRAPPER_VERSION@">
     <description>discover TE variants</description>
     <macros>
         <import>macros.xml</import>
@@ -30,21 +30,25 @@
     cat tepid_discover_log_'$bowtie2_bam.element_identifier'.txt
     ]]></command>
     <inputs>
-        <param name="bowtie2_bam" argument="--conc" type="data" format="bam"/>
-        <param name="discordant_bam" argument="--discordant" optional="true" type="data" format="bam"/>
-        <param name="split_bam" argument="--split" type="data" format="bam"/>
-        <param name="te_annotation_bed" argument="--te" type="data" format="bed"/>
-        <param name="se_mode" argument="--se" type="boolean" truevalue="--se" falsevalue="" help="Run in single-end mode"/>
-        <param name="mask" argument="--mask" type="data" optional="true" format="tab" help="Mask chromosomes present in this file"/>
-        <param name="deletions" argument="--deletions" type="boolean" truevalue="--deletions" falsevalue="" help="find deletions only"/>
-        <param name="insertions" argument="--insertions" type="boolean" truevalue="--insertions" falsevalue="" help="find insertions only"/>
-        <param name="strict" argument="--strict" type="boolean" truevalue="--strict" falsevalue="" help="Report high-confidence variants only"/>
+        <param name="bowtie2_bam" label="Alignment file (Bowtie2)" argument="--conc" type="data" format="bam"/>
+        <param name="discordant_bam" label="Alignment file with discordant pairs" argument="--discordant" optional="true" type="data" format="bam"/>
+        <param name="split_bam" label="Alignment file with split reads" argument="--split" type="data" format="bam"/>
+        <param name="mask" type="select" optional="True" label="Select chromosomes that you would like to exclude" multiple="True">
+            <options>
+                <filter type="data_meta" ref="bowtie2_bam" key="reference_names" />
+            </options>
+        </param>
+        <param name="te_annotation_bed" label="BED file with TE locations" argument="--te" type="data" format="bed"/>
+        <param name="se_mode" argument="--se" type="boolean" truevalue="--se" falsevalue="" label="Run in single-end mode?"/>
+        <param name="deletions" argument="--deletions" type="boolean" truevalue="--deletions" falsevalue="" label="Find deletions only?"/>
+        <param name="insertions" argument="--insertions" type="boolean" truevalue="--insertions" falsevalue="" label="Find insertions only?"/>
+        <param name="strict" argument="--strict" type="boolean" truevalue="--strict" falsevalue="" label="Report high-confidence variants only?"/>
     </inputs>
     <outputs>
-        <data name="insertions_out" format="bed"/>
-        <data name="deletions_out" format="bed"/>
-        <data name="insertion_reads_out" format="txt"/>
-        <data name="deletion_reads_out" format="txt"/>
+        <data name="insertions_out" format="bed" label="tepid_discover insertions on ${on_string}"/>
+        <data name="deletions_out" format="bed" label="tepid_discover deletions on ${on_string}"/>
+        <data name="insertion_reads_out" format="txt" label="tepid_discover reads supporting insertions for ${on_string}"/>
+        <data name="deletion_reads_out" format="txt" label="tepid_discover reads supporting deletions for ${on_string}"/>
     </outputs>
     <tests>
         <test>
