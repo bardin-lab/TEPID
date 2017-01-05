@@ -8,6 +8,7 @@
     <command detect_errors="exit_code"><![CDATA[
     @LINK_CONC@
     tepid-discover
+    -n '$split_bam.element_identifier'
     $deletions
     $insertions
     $strict
@@ -20,8 +21,9 @@
     @PROC@
     @NAME@
     -c conc.bam
-    -s '$split_bam'
+    -s split.bam
     -t '$te_annotation_bed'
+    -k
     $se_mode &&  ## The follwing is terrible, but from_work_dir cannot deal with variables
     mv insertions_'$bowtie2_bam.element_identifier'.bed '$insertions_out' &&
     mv deletions_'$bowtie2_bam.element_identifier'.bed '$deletions_out' &&
