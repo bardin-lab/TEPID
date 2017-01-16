@@ -1,12 +1,11 @@
 #! /usr/bin/env python
+from argparse import ArgumentParser
+import pkg_resources
+from tepid import tepid
+import random
+import string
 
 if __name__ == "__main__":
-    from argparse import ArgumentParser
-    import pkg_resources
-    from tepid import tepid
-    import random
-    import string
-
     version = pkg_resources.require("TEPID")[0].version
 
     parser = ArgumentParser(description='TEPID -- refine TE insertion and deletion calls')

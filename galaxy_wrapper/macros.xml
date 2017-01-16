@@ -1,11 +1,11 @@
 <macros>
     <xml name="requirements">
         <requirements>
-            <requirement type="package" version="0.7.0">tepid</requirement>
+            <requirement type="package" version="0.8.0">tepid</requirement>
             <yield/>
         </requirements>
     </xml>
-    <token name="@WRAPPER_VERSION@">0.7.0</token>
+    <token name="@WRAPPER_VERSION@">0.8.0</token>
     <token name="@REFERENCES@">
 <![CDATA[
 ------

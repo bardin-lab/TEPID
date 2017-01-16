@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import os
+from argparse import ArgumentParser
 
 def create_master_dict(sample, fname):
     with open(fname, 'r') as masterfile:
@@ -7,9 +9,7 @@ def create_master_dict(sample, fname):
         master_dict = {}
         for line in masterfile:
             field = line.rsplit()
-            if line[0] == 'ins_chr':
-                pass
-            else:
+            if not line[0] == 'ins_chr':
                 coords = '\t'.join(field[:5])
                 master_dict[x] = {'coords': coords, 'accessions': [sample]}
                 x += 1
@@ -40,28 +40,20 @@ def save_deletions(master, outf):
             accessions = set(value['accessions'])
             outfile.write('{c}\t{a}\n'.format(c=value['coords'], a=','.join(accessions)))
 
+def get_name_from_filename(filename):
+    return os.path.basename(filename).rsplit('.', 1)[0]
+
 if __name__ == "__main__":
-    import os
-    from argparse import ArgumentParser
 
     parser = ArgumentParser(description='Merge TE deletions calls')
-    parser.add_argument('-f', '--filename', help='filename prefix for merge files', required=True)
+    parser.add_argument('-o', '--output', help="File to write merged deletions to.", required=True)
+    parser.add_argument('-f', '--filename', help='all files that should be merged', nargs="+", required=True)
     options = parser.parse_args()
 
-    for dirs in os.listdir('.'):
-        if os.path.isdir(dirs) is True:
-            os.chdir(dirs)
-            if os.path.isfile(options.filename+'_{d}.bed'.format(d=dirs)) is True:
-                print "Processing {d}".format(d=dirs)
-                try:
-                    master_dictionary
-                except NameError:
-                    master_dictionary = create_master_dict(dirs, options.filename+'_{d}.bed'.format(d=dirs))
-                else:
-                    merge_deletions(master_dictionary, options.filename+'_{d}.bed'.format(d=dirs), dirs)
-                os.chdir('..')
-            else:
-                os.chdir('..')
-        else:
-            pass
-    save_deletions(master_dictionary, options.filename+'.bed')
+    first_file = options.filename[0]
+    first_samplename = get_name_from_filename(first_file)
+    master_dictionary = create_master_dict(first_samplename, first_file)
+    for filename in options.filename[1:]:
+        samplename = get_name_from_filename(filename)
+        merge_deletions(master_dictionary, filename, samplename)
+    save_deletions(master_dictionary, options.output)

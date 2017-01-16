@@ -21,14 +21,18 @@
     @PROC@
     @NAME@
     -c conc.bam
-    -s split.bam
+    -s '$split_bam'
     -t '$te_annotation_bed'
     -k
     $se_mode &&  ## The follwing is terrible, but from_work_dir cannot deal with variables
-    mv insertions_'$bowtie2_bam.element_identifier'.bed '$insertions_out' &&
-    mv deletions_'$bowtie2_bam.element_identifier'.bed '$deletions_out' &&
-    mv insertion_reads_'$bowtie2_bam.element_identifier'.txt '$insertion_reads_out' &&
-    mv deletion_reads_'$bowtie2_bam.element_identifier'.txt '$deletion_reads_out' &&
+    #if not str($deletions)=="--deletions":
+        mv insertions_'$bowtie2_bam.element_identifier'.bed '$insertions_out' &&
+        mv insertion_reads_'$bowtie2_bam.element_identifier'.txt '$insertion_reads_out' &&
+    #end if
+    #if not str($insertions)=="--insertions":
+        mv deletions_'$bowtie2_bam.element_identifier'.bed '$deletions_out' &&
+        mv deletion_reads_'$bowtie2_bam.element_identifier'.txt '$deletion_reads_out' &&
+    #end if
     cat tepid_discover_log_'$bowtie2_bam.element_identifier'.txt
     ]]></command>
     <inputs>
@@ -47,10 +51,18 @@
         <param name="strict" argument="--strict" type="boolean" truevalue="--strict" falsevalue="" label="Report high-confidence variants only?"/>
     </inputs>
     <outputs>
-        <data name="insertions_out" format="bed" label="tepid_discover insertions on ${on_string}"/>
-        <data name="deletions_out" format="bed" label="tepid_discover deletions on ${on_string}"/>
-        <data name="insertion_reads_out" format="txt" label="tepid_discover reads supporting insertions for ${on_string}"/>
-        <data name="deletion_reads_out" format="txt" label="tepid_discover reads supporting deletions for ${on_string}"/>
+        <data name="insertions_out" format="bed" label="tepid_discover insertions on ${on_string}">
+            <filter>not deletions</filter>
+        </data>
+        <data name="insertion_reads_out" format="txt" label="tepid_discover reads supporting insertions for ${on_string}">
+            <filter>not deletions</filter>
+        </data>
+        <data name="deletions_out" format="bed" label="tepid_discover deletions on ${on_string}">
+            <filter>not insertions</filter>
+        </data>
+        <data name="deletion_reads_out" format="txt" label="tepid_discover reads supporting deletions for ${on_string}">
+            <filter>not insertions"</filter>
+        </data>
     </outputs>
     <tests>
         <test>
@@ -61,6 +73,22 @@
             <output name="deletions_out" file="deletions_test.bed"/>
             <output name="insertion_reads_out" file="insertion_reads_test.txt"/>
             <output name="deletion_reads_out" file="deletion_reads_test.txt"/>
+        </test>
+        <test>
+            <param name="bowtie2_bam" value="conc.bam"/>
+            <param name="split_bam" value="split.bam"/>
+            <param name="te_annotation_bed" value="TAIR9_TE.bed.gz" ftype="bed"/>
+            <param name="deletions" value="true"/>
+            <output name="deletions_out" file="deletions_test.bed"/>
+            <output name="deletion_reads_out" file="deletion_reads_test.txt"/>
+        </test>
+        <test>
+            <param name="bowtie2_bam" value="conc.bam"/>
+            <param name="split_bam" value="split.bam"/>
+            <param name="te_annotation_bed" value="TAIR9_TE.bed.gz" ftype="bed"/>
+            <param name="insertions" value="true"/>
+            <output name="insertions_out" file="insertions_test.bed"/>
+            <output name="insertion_reads_out" file="insertion_reads_test.txt"/>
         </test>
     </tests>
     <help><![CDATA[
