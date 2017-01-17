@@ -72,7 +72,7 @@ def reduce_and_cluster(inputfiles):
     df.columns = COLUMNS
     # Split comma separated agi values and make set
     df['agi'] = [set(v.split(',')) for v in df['agi'].values]
-    df['accession'] = [set(v.split(',')) for v in df['accession'].values]
+    df['accession'] = [set(str(v).split(',')) for v in df['accession'].values]
     return df
 
 
