@@ -1,129 +1,111 @@
-#! /usr/bin/env python
-
-import os
-from subprocess import call
 from argparse import ArgumentParser
+import os
+import tempfile
+import pandas as pd
+import pybedtools
 
+COLUMNS = ['ins_chrom',
+           'ins_start',
+           'ins_end',
+           'ref_chrom',
+           'ref_start',
+           'ref_end',
+           'agi',
+           'accession',
+           'cluster']
 
-def overlap(start1, stop1, start2, stop2):
+def overlap(start1, stop1, start2, stop2, d=50):
     """returns True if sets of coordinates overlap. Assumes coordinates are on same chromosome"""
-    for y in xrange(start2, stop2+100):
-        if start1 <= y <= stop1:
-            return True
-        else:
-            pass
+    return start1 <= stop2+d and stop1 >= start2-d
 
 
-def create_master_dict(master, accession_name):
-    with open(master, 'r') as masterfile:
-        x = 0
-        master_insertions = {}
-        for line in masterfile:
-            line = line.rsplit()
-            if line[0] == 'ins_chr':
-                pass
-            else:
-                master_insertions[x] = {'ins_chrom': line[0], 'ins_start': int(line[1]), 'ins_end': int(line[2]),
-                                        'agi': line[6].split(','), 'ref_chrom': line[3],
-                                        'ref_start': int(line[4]), 'ref_end': int(line[5]), 'accessions': [accession_name]}
-                x += 1
-        return master_insertions
+def merge(i, insertion, result):
+    if len(result) == 0:
+        result[i] = insertion
+    else:
+        if not can_merge(insertion, result):
+            result[i] = insertion
 
 
-def merge_insertions(master_dict, ins_file, accession_name):
-    with open(ins_file, 'r') as insertions:
-        for line in insertions:
-            line = line.rsplit()
-            ins_chrom = line[0]
-            if ins_chrom == 'ins_chr':
-                pass
-            else:
-                ins_start = int(line[1])
-                ins_end = int(line[2])
-                agi = line[6].split(',')
-                ref_chrom = line[3]
-                ref_start = int(line[4])
-                ref_end = int(line[5])
-                i = len(master_dict)-1
-                x = 0
-                while x <= i:
-                    if len(set(master_dict[x]['agi']).intersection(agi)) > 0:
-                        all_agi = list(set(master_dict[x]['agi'] + agi))
-                        # need to adjust reference coords, taking coords of longest list of TEs
-                        if len(agi) < len(master_dict[x]['agi']):
-                            ref_start = master_dict[x]['ref_start']
-                            ref_end = master_dict[x]['ref_end']
-                        else:
-                            pass
-                        same_te = True
-                    else:
-                        same_te = False
-                    # find out if there is another insertion the same in another accession: same insertion chromosome, same TE
-                    if master_dict[x]['ins_chrom'] == ins_chrom and same_te is True and ref_chrom == master_dict[x]['ref_chrom'] and ref_start == master_dict[x]['ref_start']:
-                        # does it overlap with the insertion coordinated for current accession
-                        if overlap(master_dict[x]['ins_start'], master_dict[x]['ins_end'], ins_start, ins_end) is True:
-                            # same insertion, append accession name to list for that insertion
-                            master_dict[x]['accessions'].append(accession_name)
-                            master_dict[x]['agi'] = all_agi
-                            break
-                            # refine insertion coordinates
-                            if master_dict['ins_end'] > ins_start > master_dict['ins_start']:
-                                master_dict['ins_start'] = ins_start
-                            elif master_dict['ins_start'] < ins_end < master_dict['ins_end']:
-                                master_dict['ins_end'] = ins_end
-                            else:
-                                pass
-                        elif x == i:
-                            master_dict[x+1] = {'ins_chrom': ins_chrom, 'ins_start': ins_start, 'ins_end': ins_end,
-                                        'agi': all_agi, 'ref_chrom': ref_chrom,
-                                        'ref_start': ref_start, 'ref_end': ref_end, 'accessions': [accession_name]}
-                            break
-                        else:
-                            x += 1
-                            pass
-                    elif x == i:  # end of dictionary and still not found
-                        master_dict[x+1] = {'ins_chrom': ins_chrom, 'ins_start': ins_start, 'ins_end': ins_end,
-                                        'agi': agi, 'ref_chrom': ref_chrom,
-                                        'ref_start': ref_start, 'ref_end': ref_end, 'accessions': [accession_name]}
-                        break
-                    else:
-                        x += 1
-                        pass
-
-def main(filename):
-    for dirs in os.listdir('.'):
-        if os.path.isdir(dirs) is True:
-            os.chdir(dirs)
-            if os.path.isfile(filename+'_{d}.bed'.format(d=dirs)) is True:
-                print "processing {dirs}".format(dirs=dirs)
-                try:
-                    master_insertions
-                except NameError:
-                    master_insertions = create_master_dict(filename+'_{d}.bed'.format(d=dirs), dirs)
+def can_merge(insertion, result):
+    """
+    Merges insertions and returns True if all requirements are met
+    """
+    for j, master_insertion in result.items():
+        if insertion['agi'] & master_insertion['agi']:
+            if overlap(master_insertion['ins_start'], master_insertion['ins_end'], insertion['ins_start'],insertion['ins_end']):
+                # Adjusting the insertion start (doesn't really do anything?!)
+                if len(insertion['agi']) < len(master_insertion['agi']):
+                    ref_start = master_insertion['ref_start']
                 else:
-                    merge_insertions(master_insertions, filename+'_{d}.bed'.format(d=dirs), dirs)
-                os.chdir('..')
-            else:
-                os.chdir('..')
-        else:
-            pass
+                    ref_start = insertion['ref_start']
+                if master_insertion['ins_chrom'] == insertion['ins_chrom'] and insertion['ref_chrom'] == master_insertion['ref_chrom'] and ref_start == master_insertion['ref_start']:
+                   result[j]['accession'] = result[j]['accession'] | (insertion['accession'])
+                   result[j]['agi'] = result[j]['agi'] | (insertion['agi'])
+                return True
+    return False
 
-    with open(filename+'.bed', 'w+') as outfile:
-        for key, value in master_insertions.iteritems():
-            accessions = set(value['accessions'])  # removes duplicates
-            outfile.write("""{ins_chrom}\t{ins_start}\t{ins_end}\t{ref_chrom}\t{ref_start}\t{ref_end}\t{agi}\t{accessions}\n""".format(ins_chrom=value['ins_chrom'],
-                                                                                                                                             ins_start=value['ins_start'],
-                                                                                                                                             ins_end=value['ins_end'],
-                                                                                                                                             agi=",".join(value['agi']),
-                                                                                                                                             ref_chrom=value['ref_chrom'],
-                                                                                                                                             ref_start=value['ref_start'],
-                                                                                                                                             ref_end=value['ref_end'],
-                                                                                                                                             accessions=','.join(accessions)))
 
-    call("""awk 'BEGIN {FS=OFS="\t"} {print $1,$2,$3,$7,$8}' """+filename+".bed > "+filename+"_poly_te.bed", shell=True)
+def inner_merge(s):
+    result = {}
+    for i, insertion in s.items():
+        merge(i, insertion, result)
+    return result.values()
 
-parser = ArgumentParser(description='Merge TE insertions calls')
-parser.add_argument('-f', '--filename', help='filename prefix for merge files', required=True)
-options = parser.parse_args()
 
-main(options.filename)
+def reduce_and_cluster(inputfiles):
+    """
+    Read in inputfiles using pandas, write additional column with sample identifier,
+    sort and cluster using pybedtools and return dataframe.
+    """
+    usecols = [0,1,2,3,4,5,6]  # skip col 7, which contains the read support id
+    tables = [pd.read_table(f, header=None) for f in inputfiles]
+    sample_ids = [os.path.basename(f).rsplit('.')[0] for f in inputfiles]
+    for sample_id, df in zip(sample_ids, tables):
+        df[7] = sample_id
+    merged_table = pd.concat(tables)
+    tfile = tempfile.NamedTemporaryFile()
+    merged_table.to_csv(tfile, sep="\t", header=None, index=False)
+    tfile.flush()
+    bedfile = pybedtools.BedTool(tfile.name).sort().cluster(d=50)
+    df = bedfile.to_dataframe()
+    df.columns = COLUMNS
+    # Split comma separated agi values and make set
+    df['agi'] = [set(v.split(',')) for v in df['agi'].values]
+    df['accession'] = [set(v.split(',')) for v in df['accession'].values]
+    return df
+
+
+def split_clusters(df):
+    """
+    clusters as defined by bedtools allow for 50 nt distance. This means that
+    clusters can be many kb large, so we check each individual insertion in
+    the cluster against the other insertions. We split the clusters based on
+    whether the overlap and TE identity criteria are fulfilled (so a
+    different TE would lead to a split in the clusters)
+    """
+    groups = df.groupby('cluster')
+    nested_list = [inner_merge(group.transpose().to_dict()) for _, group in groups]
+    return pd.DataFrame([i for n in nested_list for i in n])[COLUMNS]
+
+
+def write_output(df, output):
+    # Turn sets back to comma-separated values
+    df['agi'] = [",".join(agi) for agi in df['agi']]
+    df['accession'] = [",".join(acc) for acc in df['accession']]
+    df.to_csv(output, sep="\t",header=None, index=None)
+
+
+def main(inputfiles, output):
+    df = reduce_and_cluster(inputfiles)
+    df = split_clusters(df)
+    write_output(df, output)
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description='Merge TE insertions calls')
+    parser.add_argument('-o', '--output', help='output file', required=True)
+    parser.add_argument('-i', '--input', help='Insertion files to merge', nargs="+", required=True)
+    options = parser.parse_args()
+
+    main(inputfiles=options.input, output=options.output)
