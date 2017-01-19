@@ -1,0 +1,41 @@
+<tool id="tepid_discover" name="tepid-discover" version="@WRAPPER_VERSION@">
+    <description>discover TE variants</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements"/>
+    <version_command>tepid-discover --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+        #for $input in $insertions:
+            ln -s -f '$input' '$input.element_identifier' &&
+        #end for
+        python '$__tool_directory__'/merge_insertions.py -i
+        #for $input in $insertions:
+            '$input.element_identifier'
+        #end for
+        -o '$merged_out'
+    ]]></command>
+    <inputs>
+        <param name="insertions" label="TEPID insertions" argument="--input" type="data_collection" format="bed"/>
+    </inputs>
+    <outputs>
+        <data name="merged_out" format="bed" label="tepid_discover merged insertions on ${on_string}">
+        </data>
+    </outputs>
+    <tests>
+        <test>
+      <param name="insertions">
+          <collection type="list">
+              <element name="1" value="1.bed" />
+              <element name="2" value="2.bed" />
+          </collection>
+        </param>
+           <output name="merged_out" file="test.bed"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+        This step merges insertions found by tepid discover.
+        The output can be used as input in the tepid-refine step.
+    ]]></help>
+<expand macro="citations"/>
+</tool>
