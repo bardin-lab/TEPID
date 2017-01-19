@@ -47,13 +47,13 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description='Merge TE deletions calls')
     parser.add_argument('-o', '--output', help="File to write merged deletions to.", required=True)
-    parser.add_argument('-f', '--filename', help='all files that should be merged', nargs="+", required=True)
+    parser.add_argument('-i', '--input', help='all files that should be merged', nargs="+", required=True)
     options = parser.parse_args()
 
-    first_file = options.filename[0]
+    first_file = options.input[0]
     first_samplename = get_name_from_filename(first_file)
     master_dictionary = create_master_dict(first_samplename, first_file)
-    for filename in options.filename[1:]:
+    for filename in options.input[1:]:
         samplename = get_name_from_filename(filename)
         merge_deletions(master_dictionary, filename, samplename)
     save_deletions(master_dictionary, options.output)
