@@ -6,11 +6,11 @@
     <expand macro="requirements"/>
     <version_command>tepid-discover --version</version_command>
     <command detect_errors="exit_code"><![CDATA[
-        #for $input in $insertions:
+        #for $input in $deletions:
             ln -s -f '$input' '$input.element_identifier' &&
         #end for
         python '$__tool_directory__'/merge_deletions.py -i
-        #for $input in $insertions:
+        #for $input in $deletions:
             '$input.element_identifier'
         #end for
         -o '$merged_out'
