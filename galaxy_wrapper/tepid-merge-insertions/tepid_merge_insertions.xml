@@ -1,4 +1,4 @@
-<tool id="tepid_discover" name="tepid-discover" version="@WRAPPER_VERSION@">
+<tool id="tepid_merge_insertions" name="tepid-merge-insertions" version="@WRAPPER_VERSION@">
     <description>discover TE variants</description>
     <macros>
         <import>macros.xml</import>
