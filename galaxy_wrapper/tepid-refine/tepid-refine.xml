@@ -1,0 +1,103 @@
+<tool id="tepid-refine" name="tepid-refine" version="0.1.0">
+    <description>refine and genotype TE insertion and deletion calls</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements"/>
+    <version_command>tepid-refine --version</version_command>
+    <command detect_errors="exit_code"><![CDATA[
+    @LINK_CONC@
+    ln -s -f '$deletion_readsupport' deletion_reads_'$bowtie2_bam.element_identifier'.txt &&
+    ln -s -f '$insertion_readsupport' insertion_reads_'$bowtie2_bam.element_identifier'.txt &&
+    tepid-refine
+    -i '$insertions'
+    -d '$deletions'
+    -c conc.bam
+    -s '$split_bam'
+    -t '$te_annotation_bed'
+    -a '$all_sample_ids'  ## use collection and collapse names in cheetah
+    @PROC@
+    @NAME@ &&
+    mv second_pass_insertion_'$bowtie2_bam.element_identifier'.bed second_pass_insertion.bed &&
+    mv ambiguous_insertion_'$bowtie2_bam.element_identifier'.bed ambiguous_insertion.bed &&
+    mv second_pass_reads_insertion_'$bowtie2_bam.element_identifier'.txt second_pass_reads_insertion.txt &&
+    mv second_pass_deletion_'$bowtie2_bam.element_identifier'.bed second_pass_deletion.bed &&
+    mv ambiguous_deletion_'$bowtie2_bam.element_identifier'.bed  ambiguous_deletion.bed &&
+    mv second_pass_reads_deletion_'$bowtie2_bam.element_identifier'.txt second_pass_reads_deletion.txt
+    ]]></command>
+    <configfiles>
+        <configfile name="all_sample_ids">#if $sample_id_source.source == 'enter':
+    #set $sample_list = "\n".join([x for x in str($sample_id_source.sample_ids).split(',')])
+#else
+    #set $sample_list =  "\n".join([str(x.element_identifier) for x in $sample_id_source.sample_ids])
+#end if
+$sample_list</configfile>
+    </configfiles>
+    <inputs>
+        <param name="bowtie2_bam" argument="--conc" type="data" format="bam"/>
+        <param name="split_bam" argument="--split" type="data" format="bam"/>
+        <param name="insertion_readsupport" type="data" format="txt"/>
+        <param name="deletion_readsupport" type="data" format="txt"/>
+        <param name="insertions" argument="--insertions" type="data" format="bed" help="Merged insertions"/>
+        <param name="deletions" argument="--deletions" type="data" format="bed" help="Merged and flipped deletions"/>
+        <param name="te_annotation_bed" argument="--te" type="data" format="bed"/>
+        <conditional name="sample_id_source">
+            <param name="source" type="select">
+                <option value="enter">Enter all sample ids</option>
+                <option value="auto">Infer sample IDs from collection identifiers</option>
+            </param>
+            <when value="enter">
+                <param name="sample_ids" type="text"/>
+            </when>
+            <when value="auto">
+                <param name="sample_ids" type="data_collection" collection_type="list"/>
+            </when>
+        </conditional>
+    </inputs>
+    <outputs>
+        <data name="refined_insertions" format="bed" from_work_dir="second_pass_insertion.bed" label="Refined insertions"/>
+        <data name="ambiguous_insertions" format="bed" from_work_dir="ambiguous_insertion.bed" label="Amibguous insertions"/>
+        <data name="second_pass_insertion_support" format="txt" from_work_dir="second_pass_reads_insertion.txt" label="Second pass insertion readsupport"/>
+        <data name="refined_deletions" format="bed" from_work_dir="second_pass_deletion.bed" label="Refined deletions"/>
+        <data name="ambiguous_deletions" format="bed" from_work_dir="ambiguous_deletion.bed" label="Ambiguous deletions"/>
+        <data name="second_pass_deletion_support" format="txt" from_work_dir="second_pass_reads_deletion.txt" label="Second pass deletion readsupport"/>
+    </outputs>
+    <tests>
+        <test>
+            <param name="bowtie2_bam" value="conc.bam"/>
+            <param name="split_bam" value="split.bam"/>
+            <param name="insertion_readsupport" value="insertion_reads_2.txt"/>
+            <param name="deletion_readsupport" value="deletion_reads_2.txt"/>
+            <param name="insertions" value="merged_insertions.bed" ftype="bed"/>
+            <param name="deletions" value="merged_flipped_deletions.bed" ftype="bed"/>
+            <param name="te_annotation_bed" value="te.bed" ftype="bed"/>
+            <param name="source" value="enter"/>
+            <param name="sample_ids" value="1,conc.bam"/>
+            <output name="refined_insertions" file="second_pass_insertion_2.bed"/>
+            <output name="refined_deletions" file="second_pass_deletion_2.bed"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+TEPID -- refine TE insertion and deletion calls
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  -k, --keep            keep all intermediate files
+  -i INSERTIONS, --insertions INSERTIONS
+                        File containing collapsed TE insertions for all
+                        samples in population
+  -d DELETIONS, --deletions DELETIONS
+                        File containing collapsed TE deletions for all samples
+                        in population
+  -p PROC, --proc PROC  number of processors
+  -t TE, --te TE        TE annotation bedfile
+  -n NAME, --name NAME  sample name
+  -c CONC, --conc CONC  bam file from bowtie2
+  -s SPLIT, --split SPLIT
+                        split reads bam file from yaha
+  -a ALL_SAMPLES, --all_samples ALL_SAMPLES
+                        List of all sample names
+    ]]></help>
+<expand macro="citations"/>
+</tool>
