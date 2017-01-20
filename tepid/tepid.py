@@ -47,15 +47,15 @@ def find_reads(coords, bam):
         return False
 
 
-def flatten_list(l):
-    return set([i for s in l for i in s])
-
-
 def check_no_breaks(coords):
-    """[[start,stop]...[start,stop]]"""
+    """
+    Checks if any of the coords are not overlapping
+    [[start,stop]...[start,stop]]
+    """
+
     copy = sorted(list(coords))
-    for i, _ in enumerate(copy):
-        if _overlap(copy[x][0], copy[x][1], copy[x+1][0], copy[x+1][1], 0) is False:
+    for i in range(len(copy)-1):
+        if _overlap(copy[i][0], copy[i][1], copy[i+1][0], copy[i+1][1], 0) is False:
             return False
     return True
 
@@ -68,8 +68,8 @@ def find_reads_conc(coords, bam):
     intervals = []
     for read in reads:
         if read.pos and read.aend:
-            intervals.append([read.pos, read.aend])
-    intervals = flatten_list(intervals)
+            intervals.append((read.pos, read.aend))
+    intervals = set(intervals)
     return check_no_breaks(intervals)
 
 
@@ -178,7 +178,7 @@ def process_missed(data, indel, concordant, split_alignments, name_indexed, acc,
                         if indel == 'insertion':
                             read_names = check_te_overlaps(te, extracted, te_list)
                         elif indel == 'deletion':
-                            read_names = check_te_overlaps_dels(te, extracted, te_list, options.prefix)
+                            read_names = check_te_overlaps_dels(te, extracted, te_list, acc)
                         else:
                             raise Exception()
                         if len(read_names) >= refine_read_count:  # enough evidence to call indel
