@@ -1,7 +1,14 @@
 *TEPID*
 ======
 
-TEPID uses illumina sequencing reads to identify novel TE variants. First, reads are mapped to a reference genome using bowtie2 and yaha. This produces two bam files, one containing mapped reads, and one containing mapped split reads. Python scripts are then used to identify the absence of reference TE insertions and the presence of non-reference insertions. Having a high-quality TE annotation and reference genome assembly, as well as deep sequencing coverage (>20x) and long reads (100 bp or more) will greatly improve the quality of TE presence/absence calls made.
+TEPID uses illumina sequencing reads to identify novel TE variants. First,
+reads are mapped to a reference genome using bowtie2 and yaha. This produces
+two bam files, one containing mapped reads, and one containing mapped split
+reads. Python scripts are then used to identify the absence of reference TE
+insertions and the presence of non-reference insertions. Having a high-quality
+TE annotation and reference genome assembly, as well as deep sequencing
+coverage (>20x) and long reads (100 bp or more) will greatly improve the
+quality of TE presence/absence calls made.
 
 ## Installation
 
@@ -14,7 +21,8 @@ python setup.py install
 
 ## Testing
 
-This will check that the code runs correctly and is able to identify a known, experimentally verified, TE insertion and TE deletion.
+This will check that the code runs correctly and is able to identify a known,
+experimentally verified, TE insertion and TE deletion.
 
 ```
 python setup.py test
@@ -44,7 +52,10 @@ tepid-map -- map paired-end data using bowtie2 and yaha
   -z  gzip fastq files (optional)
 ```
 
-This will look for the two fastq file specified using the `-1` and `-2` options, and map these using the number of processors specified in `-p`. These files must be present in the current directory, or in direcories immediately below the current directory if the `-r` option is used.
+This will look for the two fastq file specified using the `-1` and `-2`
+options, and map these using the number of processors specified in `-p`. These
+files must be present in the current directory, or in direcories immediately
+below the current directory if the `-r` option is used.
 
 #### Single-end mode
 
