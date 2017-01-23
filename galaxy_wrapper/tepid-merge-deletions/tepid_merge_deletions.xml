@@ -13,10 +13,18 @@
         #for $input in $deletions:
             '$input.element_identifier'
         #end for
+        -o merged.bed && cat merged.bed && python $__tool_directory__/flip_deletions.py
+        -s
+        #for $sample in $deletions:
+            '$sample.element_identifier'
+        #end for
+        -d merged.bed
+        -r '$reference_name'
         -o '$merged_out'
     ]]></command>
     <inputs>
-        <param name="deletions" label="TEPID deletions" argument="--input" type="data_collection" format="bed"/>
+        <param name="deletions" label="TEPID deletions" argument="--input" type="data_collection" collection_type="list" format="bed"/>
+        <param name="reference_name" label="Reference sample name" argument="--reference" type="text" value="ref"/>
     </inputs>
     <outputs>
         <data name="merged_out" format="bed" label="tepid_discover merged deletions on ${on_string}">
@@ -24,13 +32,14 @@
     </outputs>
     <tests>
         <test>
-      <param name="deletions">
-          <collection type="list">
-              <element name="1" value="1.bed" />
-              <element name="2" value="2.bed" />
-          </collection>
-        </param>
-           <output name="merged_out" file="merged.bed"/>
+            <param name="deletions">
+                <collection type="list">
+                    <element name="1" value="1.bed" />
+                    <element name="2" value="2.bed" />
+                </collection>
+            </param>
+            <param name="reference_name" value="ref"/>
+            <output name="merged_out" file="merged.bed"/>
         </test>
     </tests>
     <help><![CDATA[
