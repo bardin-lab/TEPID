@@ -93,7 +93,8 @@ def write_output(df, output):
     # Turn sets back to comma-separated values
     df['agi'] = [",".join(agi) for agi in df['agi']]
     df['accession'] = [",".join(acc) for acc in df['accession']]
-    df.to_csv(output, sep="\t",header=None, index=None)
+    # write out result without last column
+    df.to_csv(output, sep="\t",header=None, index=None, columns=COLUMNS[:-1])
 
 
 def main(inputfiles, output):
